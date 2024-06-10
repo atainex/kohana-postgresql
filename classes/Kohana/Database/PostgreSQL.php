@@ -84,7 +84,7 @@ class Kohana_Database_PostgreSQL extends Database
 			throw new Database_Exception(':error', array(':error' => $e->getMessage()));
 		}
 
-		if ( ! is_resource($this->_connection))
+		if ($this->_connection === FALSE || $this->_connection === NULL)
 			throw new Database_Exception('Unable to connect to PostgreSQL ":name"', array(':name' => $this->_instance));
 
 		$this->_version = pg_parameter_status($this->_connection, 'server_version');

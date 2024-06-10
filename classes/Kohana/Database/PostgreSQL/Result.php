@@ -79,34 +79,45 @@ class Kohana_Database_PostgreSQL_Result extends Database_Result
 		return parent::as_array($key, $value);
 	}
 
-	/**
-	 * SeekableIterator: seek
-	 */
+	#[\ReturnTypeWillChange]
 	public function seek($offset)
 	{
-		if ( ! $this->offsetExists($offset))
+		if ($this->offsetExists($offset) AND $this->_result->data_seek($offset))
+		{
+			// Set the current row to the offset
+			$this->_current_row = $this->_internal_row = $offset;
+
+			return TRUE;
+		}
+		else
+		{
 			return FALSE;
-
-		$this->_current_row = $offset;
-
-		return TRUE;
+		}
 	}
 
-	/**
-	 * Iterator: current
-	 */
+	#[\ReturnTypeWillChange]
 	public function current()
 	{
-		if ( ! $this->offsetExists($this->_current_row))
-			return FALSE;
+		if ($this->_current_row !== $this->_internal_row AND ! $this->seek($this->_current_row))
+			return NULL;
 
-		if ( ! $this->_as_object)
-			return pg_fetch_assoc($this->_result, $this->_current_row);
+		// Increment internal row for optimization assuming rows are fetched in order
+		$this->_internal_row++;
 
-		if ( ! $this->_object_params)
-			return pg_fetch_object($this->_result, $this->_current_row, $this->_as_object);
-
-		return pg_fetch_object($this->_result, $this->_current_row, $this->_as_object, $this->_object_params);
+		if ($this->_as_object === TRUE)
+		{
+			// Return an stdClass
+			return $this->_result->fetch_object();
+		}
+		elseif (is_string($this->_as_object))
+		{
+			// Return an object of given class name
+			return $this->_result->fetch_object($this->_as_object, (array) $this->_object_params);
+		}
+		else
+		{
+			// Return an array of the row
+			return $this->_result->fetch_assoc();
+		}
 	}
-
 }
