@@ -10,14 +10,11 @@
  */
 class Kohana_Database_PostgreSQL_Result extends Database_Result
 {
+	protected $_internal_row = 0;
+
 	public function __construct($result, $sql, $as_object = FALSE, $params = NULL, $total_rows = NULL)
 	{
 		parent::__construct($result, $sql, $as_object, $params);
-
-		if ($as_object === TRUE)
-		{
-			$this->_as_object = 'stdClass';
-		}
 
 		if ($total_rows !== NULL)
 		{
@@ -107,17 +104,17 @@ class Kohana_Database_PostgreSQL_Result extends Database_Result
 		if ($this->_as_object === TRUE)
 		{
 			// Return an stdClass
-			return $this->_result->fetch_object();
+			return pg_fetch_object($this->_result);
 		}
 		elseif (is_string($this->_as_object))
 		{
 			// Return an object of given class name
-			return $this->_result->fetch_object($this->_as_object, (array) $this->_object_params);
+			return pg_fetch_object($this->_result, null, $this->_as_object, (array) $this->_object_params);
 		}
 		else
 		{
 			// Return an array of the row
-			return $this->_result->fetch_assoc();
+			return pg_fetch_assoc($this->_result);
 		}
 	}
 }
